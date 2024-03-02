@@ -2,12 +2,14 @@
 #include <raymath.h>
 
 #define ORC_SIZE  48
+#define SIZE      20
+
 #define ORC_COUNT 6
 #define ORC_FPS   10
 #define ORC_TIME  1.0f / ORC_FPS
 
-#define SPEED     10.0f
-#define FRICTION  0.8f
+#define SPEED     25.0f
+#define FRICTION  0.9f
 
 const int screenWidth = 504;
 const int screenHeight = 997;
@@ -24,6 +26,7 @@ float orcTimer = ORC_TIME;
 
 Vector2 vel = {0, 0};
 Vector2 pos = {0, 0};
+int angle = 0;
 
 enum states {
   WALK_U,
@@ -39,3 +42,8 @@ enum states {
 enum dirs { L, R, U, D };
 enum states state = WALK_D;
 enum dirs dir = L;
+
+#define MOBS_RADIUS 1000
+#define MOBS_COUNT  5000
+#define MOBS_SPEED  0.5
+Vector2 mobs[MOBS_COUNT] = {};

@@ -8,57 +8,58 @@ int main() {
   SetWindowPosition(1176, 0);
   SetTargetFPS(60);
 
-  walkD = LoadTexture("resources/orc/D_Walk.png");
-  walkU = LoadTexture("resources/orc/U_Walk.png");
-  walkS = LoadTexture("resources/orc/S_Walk.png");
-  attackU = LoadTexture("resources/orc/U_Attack.png");
-  attackD = LoadTexture("resources/orc/D_Attack.png");
-  attackS = LoadTexture("resources/orc/S_Attack.png");
+  const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
 
-  Texture2D textures[] = {walkU, walkD, walkS, walkS, attackU, attackD, attackS, attackS};
+  for (int i = 0; i < MOBS_COUNT; i++)
+    mobs[i] = (Vector2
+    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
 
-  Camera2D camera = {0};
-  camera.offset = (Vector2){screenWidth / 2.0f, screenHeight / 2.0f};
-  camera.zoom = 2.5f;
+  Camera2D camera = {};
+  camera.offset = center;
+  camera.zoom = 0.5f;
 
   while (!WindowShouldClose()) {
     // update
-    if (IsKeyDown(KEY_W)) state = WALK_U, dir = U, vel.y += SPEED;
-    if (IsKeyDown(KEY_S)) state = WALK_D, dir = D, vel.y -= SPEED;
-    if (IsKeyDown(KEY_D)) state = WALK_R, dir = R, vel.x -= SPEED;
-    if (IsKeyDown(KEY_A)) state = WALK_L, dir = L, vel.x += SPEED;
+    if (IsKeyDown(KEY_W)) state = WALK_U, dir = U, vel.y -= SPEED;
+    if (IsKeyDown(KEY_S)) state = WALK_D, dir = D, vel.y += SPEED;
+    if (IsKeyDown(KEY_D)) state = WALK_R, dir = R, vel.x += SPEED;
+    if (IsKeyDown(KEY_A)) state = WALK_L, dir = L, vel.x -= SPEED;
 
-    if (IsMouseButtonPressed(0)) {
-      if (dir == U) state = ATTACK_U;
-      if (dir == D) state = ATTACK_D;
-      if (dir == L) state = ATTACK_L;
-      if (dir == R) state = ATTACK_R;
-    }
+    Vector2 cursor = GetMousePosition();
+    float dirAngle = atan2(cursor.y - center.y, cursor.x - center.x) * RAD2DEG;
 
     vel = Vector2Multiply(vel, (Vector2){FRICTION, FRICTION});
     pos = Vector2Add(pos, Vector2Scale(vel, GetFrameTime()));
+    angle = dirAngle;
 
-    // animation
-    orcTimer -= GetFrameTime();
-    if (orcTimer <= 0) orcTimer = ORC_TIME, orcIndex++;
+    camera.target = pos;
 
     // draw
     BeginDrawing();
-    BeginMode2D(camera);
     ClearBackground(RAYWHITE);
 
-    int scaleX = 1;
-    int scaleY = 1;
-    if (dir == L) scaleX = 1;
-    if (dir == R) scaleX = -1;
+    BeginMode2D(camera);
 
-    Rectangle source = {ORC_SIZE * orcIndex, 0, ORC_SIZE * scaleX, ORC_SIZE * scaleY};
-    Rectangle dest = {0, 0, source.width * scaleX, source.height * scaleY};
-    Vector2 origin = (Vector2){pos.x, pos.y};
+    for (int i = 0; i < MOBS_COUNT; i++) {
+      Vector2* mob = &mobs[i];
 
-    DrawTexturePro(textures[state], source, dest, origin, 0, WHITE);
+      Vector2 direction = Vector2Subtract(pos, *mob);
+      Vector2 normalizedDirection = Vector2Normalize(direction);
+      Vector2 mobVel = {normalizedDirection.x * MOBS_SPEED, normalizedDirection.y * MOBS_SPEED};
 
-    // DrawRectangle(0, 0, ORC_SIZE, ORC_SIZE, (Color){255, 0, 0, 50});
+      mob->x += mobVel.x;
+      mob->y += mobVel.y;
+
+      DrawRectanglePro(
+        (Rectangle){mob->x, mob->y, SIZE, SIZE, BLACK}, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, 0, GRAY
+      );
+    }
+
+    DrawRectanglePro(
+      (Rectangle){pos.x, pos.y, SIZE, SIZE, BLACK}, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, angle,
+      BLACK
+    );
+
     EndMode2D();
 
     // UI
