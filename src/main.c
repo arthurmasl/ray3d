@@ -5,7 +5,7 @@
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(screenWidth, screenHeight, "ray3d");
-  SetWindowPosition(1000, 0);
+  SetWindowPosition(1176, 0);
   SetTargetFPS(60);
 
   walkD = LoadTexture("resources/orc/D_Walk.png");

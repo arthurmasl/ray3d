@@ -9,7 +9,7 @@
 #define SPEED     10.0f
 #define FRICTION  0.8f
 
-const int screenWidth = 680;
+const int screenWidth = 504;
 const int screenHeight = 997;
 
 Texture2D walkD;
