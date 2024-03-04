@@ -4,16 +4,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// const int screenWidth = 504;
-// const int screenHeight = 997;
-const int screenWidth = 1920;
-const int screenHeight = 1080;
+const int screenWidth = 504;
+const int screenHeight = 997;
+
+// const int screenWidth = 1920;
+// const int screenHeight = 1080;
 
 int main() {
 
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(screenWidth, screenHeight, "ray3d");
-  // SetWindowPosition(1176, 0);
+  SetWindowPosition(1176, 0);
   SetTargetFPS(60);
 
   const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
@@ -86,14 +87,12 @@ int main() {
     DrawText(mobsCountText, 120, 40, 20, WHITE);
 
     Rectangle button = {10, 70, 130, 40};
-    // DrawRectangle(10, 70, 130, 40, GREEN);
     DrawRectangleRec(button, GREEN);
     DrawText("INCREASE", 20, 80, 20, WHITE);
 
     if (CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(0)) {
       printf("pressed\n");
       mobs_s += 10000;
-
       mobs = (Vector2*)realloc(mobs, mobs_s * sizeof(Vector2));
 
       for (int i = 0; i < mobs_s; i++)
