@@ -11,9 +11,6 @@
 #define SPEED     25.0f
 #define FRICTION  0.9f
 
-const int screenWidth = 504;
-const int screenHeight = 997;
-
 Texture2D walkD;
 Texture2D walkU;
 Texture2D walkS;
@@ -43,7 +40,6 @@ enum dirs { L, R, U, D };
 enum states state = WALK_D;
 enum dirs dir = L;
 
-#define MOBS_RADIUS 1000
-#define MOBS_COUNT  5000
+#define MOBS_RADIUS 5000
+#define MOBS_COUNT  10000
 #define MOBS_SPEED  0.5
-Vector2 mobs[MOBS_COUNT] = {};
