@@ -30,7 +30,7 @@ int main() {
 
   Camera2D camera = {};
   camera.offset = center;
-  camera.zoom = 0.2f;
+  camera.zoom = 1.2f;
 
   while (!WindowShouldClose()) {
     // update

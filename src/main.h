@@ -41,5 +41,5 @@ enum states state = WALK_D;
 enum dirs dir = L;
 
 #define MOBS_RADIUS 5000
-#define MOBS_COUNT  10000
+#define MOBS_COUNT  1000
 #define MOBS_SPEED  0.5
