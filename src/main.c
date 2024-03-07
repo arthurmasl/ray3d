@@ -11,7 +11,6 @@ const int screenHeight = 997;
 // const int screenHeight = 1080;
 
 int main() {
-
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(screenWidth, screenHeight, "ray3d");
   SetWindowPosition(1176, 0);
@@ -24,6 +23,8 @@ int main() {
 
   mobs = (Vector2*)malloc(mobs_s * sizeof(Vector2));
 
+  int playerSize = SIZE;
+
   for (int i = 0; i < mobs_s; i++)
     mobs[i] = (Vector2
     ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
@@ -33,18 +34,19 @@ int main() {
   camera.zoom = 1.2f;
 
   while (!WindowShouldClose()) {
-    // update
+    // controls
     if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) state = WALK_U, dir = U, vel.y -= SPEED;
     if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) state = WALK_D, dir = D, vel.y += SPEED;
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) state = WALK_R, dir = R, vel.x += SPEED;
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) state = WALK_L, dir = L, vel.x -= SPEED;
 
+    // player
     Vector2 cursor = GetMousePosition();
     float dirAngle = atan2(cursor.y - center.y, cursor.x - center.x) * RAD2DEG;
 
     vel = Vector2Multiply(vel, (Vector2){FRICTION, FRICTION});
     pos = Vector2Add(pos, Vector2Scale(vel, GetFrameTime()));
-    angle = dirAngle;
+    // angle = dirAngle;
 
     camera.target = pos;
 
@@ -54,6 +56,11 @@ int main() {
 
     BeginMode2D(camera);
 
+    // draw player
+    Rectangle playerRectangle = (Rectangle){pos.x, pos.y, playerSize, playerSize};
+    DrawRectanglePro(playerRectangle, (Vector2){playerSize / 2.0f, playerSize / 2.0f}, angle, RED);
+
+    // enemy
     for (int i = 0; i < mobs_s; i++) {
       Vector2* mob = &mobs[i];
 
@@ -64,14 +71,21 @@ int main() {
       mob->x += mobVel.x;
       mob->y += mobVel.y;
 
-      DrawRectanglePro(
-        (Rectangle){mob->x, mob->y, SIZE, SIZE, BLACK}, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, 0, GRAY
-      );
-    }
+      Rectangle enemyRectangle = (Rectangle){mob->x, mob->y, SIZE, SIZE};
 
-    DrawRectanglePro(
-      (Rectangle){pos.x, pos.y, SIZE, SIZE, BLACK}, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, angle, RED
-    );
+      // collision
+      Rectangle pRec = (Rectangle
+      ){playerRectangle.x - playerSize / 2.0f, playerRectangle.y - playerSize / 2.0f, playerSize,
+        playerSize};
+
+      if (CheckCollisionRecs(enemyRectangle, pRec)) {
+        mob->x = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
+        mob->y = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
+        // playerSize += 1;
+      }
+
+      DrawRectanglePro(enemyRectangle, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, 0, GRAY);
+    }
 
     EndMode2D();
 
@@ -90,8 +104,7 @@ int main() {
     DrawRectangleRec(button, GREEN);
     DrawText("INCREASE", 20, 80, 20, WHITE);
 
-    if (CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(0)) {
-      printf("pressed\n");
+    if ((CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(0)) || IsKeyPressed(KEY_I)) {
       mobs_s += 10000;
       mobs = (Vector2*)realloc(mobs, mobs_s * sizeof(Vector2));
 
@@ -99,6 +112,18 @@ int main() {
         mobs[i] = (Vector2
         ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
     };
+
+    if (IsKeyPressed(KEY_O)) {
+      mobs_s -= 10000;
+      mobs = (Vector2*)realloc(mobs, mobs_s * sizeof(Vector2));
+
+      for (int i = 0; i < mobs_s; i++)
+        mobs[i] = (Vector2
+        ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
+    };
+
+    if (IsKeyPressed(KEY_J)) camera.zoom += 0.1f;
+    if (IsKeyPressed(KEY_K)) camera.zoom -= 0.1f;
 
     EndDrawing();
   }

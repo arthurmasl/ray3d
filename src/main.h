@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 #include <raylib.h>
 #include <raymath.h>
 
@@ -42,4 +45,6 @@ enum dirs dir = L;
 
 #define MOBS_RADIUS 5000
 #define MOBS_COUNT  1000
-#define MOBS_SPEED  0.5
+#define MOBS_SPEED  0.5f
+
+#endif
