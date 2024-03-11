@@ -5,10 +5,28 @@
 #include <stdlib.h>
 
 const int screenWidth = 504;
-const int screenHeight = 997;
+const int screenHeight = 1052;
 
-// const int screenWidth = 1920;
-// const int screenHeight = 1080;
+Vector2* createMobs(int count) {
+  Vector2* mobs;
+
+  mobs = (Vector2*)malloc(count * sizeof(Vector2));
+
+  for (int i = 0; i < count; i++)
+    mobs[i] = (Vector2
+    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
+
+  return mobs;
+}
+
+void updateMobsCount(int* mobsCount, Vector2** mobs, int addCount) {
+  *mobsCount += addCount;
+  *mobs = (Vector2*)realloc(*mobs, *mobsCount * sizeof(Vector2));
+
+  for (int i = 0; i < *mobsCount; i++)
+    (*mobs)[i] = (Vector2
+    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
+}
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
@@ -18,16 +36,11 @@ int main() {
 
   const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
 
-  Vector2* mobs;
-  int mobs_s = MOBS_COUNT;
-
-  mobs = (Vector2*)malloc(mobs_s * sizeof(Vector2));
+  int mobsCount = MOBS_COUNT;
+  Vector2* mobs = createMobs(mobsCount);
 
   int playerSize = SIZE;
-
-  for (int i = 0; i < mobs_s; i++)
-    mobs[i] = (Vector2
-    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
+  bool paused = true;
 
   Camera2D camera = {};
   camera.offset = center;
@@ -60,31 +73,36 @@ int main() {
     Rectangle playerRectangle = (Rectangle){pos.x, pos.y, playerSize, playerSize};
     DrawRectanglePro(playerRectangle, (Vector2){playerSize / 2.0f, playerSize / 2.0f}, angle, RED);
 
+    // player debug
+    Rectangle playerCollisionBox = (Rectangle
+    ){pos.x - playerSize / 2.0f, pos.y - playerSize / 2.0f, playerSize, playerSize};
+    DrawRectangleLinesEx(playerCollisionBox, 2, GREEN);
+
     // enemy
-    for (int i = 0; i < mobs_s; i++) {
+    for (int i = 0; i < mobsCount; i++) {
       Vector2* mob = &mobs[i];
 
-      Vector2 direction = Vector2Subtract(pos, *mob);
-      Vector2 normalizedDirection = Vector2Normalize(direction);
-      Vector2 mobVel = {normalizedDirection.x * MOBS_SPEED, normalizedDirection.y * MOBS_SPEED};
+      if (!paused) {
+        Vector2 direction = Vector2Subtract(pos, *mob);
+        Vector2 normalizedDirection = Vector2Normalize(direction);
+        Vector2 mobVel = {normalizedDirection.x * MOBS_SPEED, normalizedDirection.y * MOBS_SPEED};
 
-      mob->x += mobVel.x;
-      mob->y += mobVel.y;
-
-      Rectangle enemyRectangle = (Rectangle){mob->x, mob->y, SIZE, SIZE};
-
-      // collision
-      Rectangle pRec = (Rectangle
-      ){playerRectangle.x - playerSize / 2.0f, playerRectangle.y - playerSize / 2.0f, playerSize,
-        playerSize};
-
-      if (CheckCollisionRecs(enemyRectangle, pRec)) {
-        mob->x = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
-        mob->y = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
-        // playerSize += 1;
+        mob->x += mobVel.x;
+        mob->y += mobVel.y;
       }
 
-      DrawRectanglePro(enemyRectangle, (Vector2){SIZE / 2.0f, SIZE / 2.0f}, 0, GRAY);
+      Rectangle enemyCollisionBox = (Rectangle
+      ){mob->x - SIZE / 2.0f, mob->y - SIZE / 2.0f, SIZE, SIZE};
+
+      // collision
+      if (CheckCollisionRecs(enemyCollisionBox, playerCollisionBox)) {
+        mob->x = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
+        mob->y = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
+        playerSize += 1;
+      }
+
+      DrawRectangleRec(enemyCollisionBox, GRAY);
+      DrawRectangleLinesEx(enemyCollisionBox, 2, GREEN);
     }
 
     EndMode2D();
@@ -93,35 +111,17 @@ int main() {
     DrawFPS(10, 10);
 
     char mobsCountText[20];
-    sprintf(mobsCountText, "%d", mobs_s);
+    sprintf(mobsCountText, "%d", mobsCount);
 
     Rectangle bord = {10, 30, 200, 40};
     DrawRectangleRec(bord, GREEN);
     DrawText("SPRITES:", 20, 40, 20, WHITE);
     DrawText(mobsCountText, 120, 40, 20, WHITE);
 
-    Rectangle button = {10, 70, 130, 40};
-    DrawRectangleRec(button, GREEN);
-    DrawText("INCREASE", 20, 80, 20, WHITE);
-
-    if ((CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(0)) || IsKeyPressed(KEY_I)) {
-      mobs_s += 10000;
-      mobs = (Vector2*)realloc(mobs, mobs_s * sizeof(Vector2));
-
-      for (int i = 0; i < mobs_s; i++)
-        mobs[i] = (Vector2
-        ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
-    };
-
-    if (IsKeyPressed(KEY_O)) {
-      mobs_s -= 10000;
-      mobs = (Vector2*)realloc(mobs, mobs_s * sizeof(Vector2));
-
-      for (int i = 0; i < mobs_s; i++)
-        mobs[i] = (Vector2
-        ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
-    };
-
+    // keys
+    if (IsKeyPressed(KEY_I)) updateMobsCount(&mobsCount, &mobs, 10000);
+    if (IsKeyPressed(KEY_O)) updateMobsCount(&mobsCount, &mobs, -10000);
+    if (IsKeyPressed(KEY_P)) paused = !paused;
     if (IsKeyPressed(KEY_J)) camera.zoom += 0.1f;
     if (IsKeyPressed(KEY_K)) camera.zoom -= 0.1f;
 
