@@ -6,11 +6,10 @@
 
 const int screenWidth = 504;
 const int screenHeight = 1052;
+const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
 
 Vector2* createMobs(int count) {
-  Vector2* mobs;
-
-  mobs = (Vector2*)malloc(count * sizeof(Vector2));
+  Vector2* mobs = (Vector2*)malloc(count * sizeof(Vector2));
 
   for (int i = 0; i < count; i++)
     mobs[i] = (Vector2
@@ -34,17 +33,14 @@ int main() {
   SetWindowPosition(1176, 0);
   SetTargetFPS(60);
 
-  const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
+  bool paused = false;
+  bool debug = false;
 
   int mobsCount = MOBS_COUNT;
-  Vector2* mobs = createMobs(mobsCount);
-
   int playerSize = SIZE;
-  bool paused = true;
 
-  Camera2D camera = {};
-  camera.offset = center;
-  camera.zoom = 1.2f;
+  Vector2* mobs = createMobs(mobsCount);
+  Camera2D camera = {.offset = center, .zoom = 1.2f};
 
   while (!WindowShouldClose()) {
     // controls
@@ -52,6 +48,15 @@ int main() {
     if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) state = WALK_D, dir = D, vel.y += SPEED;
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) state = WALK_R, dir = R, vel.x += SPEED;
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) state = WALK_L, dir = L, vel.x -= SPEED;
+
+    // keys
+    if (IsKeyPressed(KEY_I)) updateMobsCount(&mobsCount, &mobs, 10000);
+    if (IsKeyPressed(KEY_O)) updateMobsCount(&mobsCount, &mobs, -10000);
+    if (IsKeyPressed(KEY_P)) paused = !paused;
+    if (IsKeyPressed(KEY_J)) camera.zoom += 0.1f;
+    if (IsKeyPressed(KEY_K)) camera.zoom -= 0.1f;
+    if (IsKeyPressed(KEY_R)) pos.x = 0, pos.y = 0, playerSize = SIZE;
+    if (IsKeyPressed(KEY_Z)) debug = !debug;
 
     // player
     Vector2 cursor = GetMousePosition();
@@ -72,11 +77,9 @@ int main() {
     // draw player
     Rectangle playerRectangle = (Rectangle){pos.x, pos.y, playerSize, playerSize};
     DrawRectanglePro(playerRectangle, (Vector2){playerSize / 2.0f, playerSize / 2.0f}, angle, RED);
-
-    // player debug
     Rectangle playerCollisionBox = (Rectangle
     ){pos.x - playerSize / 2.0f, pos.y - playerSize / 2.0f, playerSize, playerSize};
-    DrawRectangleLinesEx(playerCollisionBox, 2, GREEN);
+    if (debug) DrawRectangleLinesEx(playerCollisionBox, 2, GREEN);
 
     // enemy
     for (int i = 0; i < mobsCount; i++) {
@@ -102,7 +105,7 @@ int main() {
       }
 
       DrawRectangleRec(enemyCollisionBox, GRAY);
-      DrawRectangleLinesEx(enemyCollisionBox, 2, GREEN);
+      if (debug) DrawRectangleLinesEx(enemyCollisionBox, 2, GREEN);
     }
 
     EndMode2D();
@@ -118,17 +121,9 @@ int main() {
     DrawText("SPRITES:", 20, 40, 20, WHITE);
     DrawText(mobsCountText, 120, 40, 20, WHITE);
 
-    // keys
-    if (IsKeyPressed(KEY_I)) updateMobsCount(&mobsCount, &mobs, 10000);
-    if (IsKeyPressed(KEY_O)) updateMobsCount(&mobsCount, &mobs, -10000);
-    if (IsKeyPressed(KEY_P)) paused = !paused;
-    if (IsKeyPressed(KEY_J)) camera.zoom += 0.1f;
-    if (IsKeyPressed(KEY_K)) camera.zoom -= 0.1f;
-
     EndDrawing();
   }
 
   CloseWindow();
-
   return 0;
 }
