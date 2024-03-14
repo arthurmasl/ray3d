@@ -11,7 +11,7 @@
 #define ORC_FPS   10
 #define ORC_TIME  1.0f / ORC_FPS
 
-#define SPEED     0.3f
+#define SPEED     25.0f
 #define FRICTION  0.9f
 
 Texture2D walkD;
