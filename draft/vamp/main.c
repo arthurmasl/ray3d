@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int screenWidth = 504;
+const int screenWidth = 552;
 const int screenHeight = 1052;
 const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
 

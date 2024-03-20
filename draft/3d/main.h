@@ -11,7 +11,7 @@
 #define ORC_FPS   10
 #define ORC_TIME  1.0f / ORC_FPS
 
-#define SPEED     25.0f
+#define SPEED     0.3f
 #define FRICTION  0.9f
 
 Texture2D walkD;
@@ -44,7 +44,7 @@ enum states state = WALK_D;
 enum dirs dir = L;
 
 #define MOBS_RADIUS 5000
-#define MOBS_COUNT  10000
+#define MOBS_COUNT  10
 #define MOBS_SPEED  0.5f
 
 #endif
