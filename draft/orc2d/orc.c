@@ -1,6 +1,6 @@
-#include "main.h"
 #include <raylib.h>
 #include <raymath.h>
+#include "main.h"
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);

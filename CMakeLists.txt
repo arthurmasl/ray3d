@@ -20,6 +20,9 @@ if (NOT raylib_FOUND)
   endif()
 endif()
 
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set(CMAKE_BUILD_TYPE Debug)
+
 file(GLOB SOURCES src/*.c)
 file(GLOB HEADERS src/*.h)
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

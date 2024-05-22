@@ -1,31 +1,10 @@
 #include "main.h"
 #include <raylib.h>
 #include <raymath.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 const int screenWidth = 552;
 const int screenHeight = 1052;
 const Vector2 center = {screenWidth / 2.0f, screenHeight / 2.0f};
-
-Vector2* createMobs(int count) {
-  Vector2* mobs = (Vector2*)malloc(count * sizeof(Vector2));
-
-  for (int i = 0; i < count; i++)
-    mobs[i] = (Vector2
-    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
-
-  return mobs;
-}
-
-void updateMobsCount(int* mobsCount, Vector2** mobs, int addCount) {
-  *mobsCount += addCount;
-  *mobs = (Vector2*)realloc(*mobs, *mobsCount * sizeof(Vector2));
-
-  for (int i = 0; i < *mobsCount; i++)
-    (*mobs)[i] = (Vector2
-    ){GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS), GetRandomValue(-MOBS_RADIUS, MOBS_RADIUS)};
-}
 
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
@@ -33,96 +12,91 @@ int main() {
   SetWindowPosition(1176, 0);
   SetTargetFPS(60);
 
-  bool paused = false;
-  bool debug = false;
+  Vector3 vel;
 
-  int mobsCount = MOBS_COUNT;
-  int playerSize = SIZE;
+  Model warriorModel = LoadModel("resources/warrior/model.obj");
+  Texture2D warriorTexture = LoadTexture("resources/warrior/texture.png");
+  warriorModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = warriorTexture;
 
-  Vector2* mobs = createMobs(mobsCount);
-  Camera2D camera = {.offset = center, .zoom = 0.3f};
+  Model stompModel = LoadModel("resources/stomp/model.obj");
+  Texture2D stompTexture = LoadTexture("resources/stomp/texture.png");
+  stompModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = stompTexture;
+
+  Model orcModel = LoadModel("resources/orc/orc.obj");
+  Texture2D orcTexture = LoadTexture("resources/orc/orc.texture.png");
+  orcModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = orcTexture;
+
+  int frameCounter = 0;
+  int animsCount = 0;
+  ModelAnimation* orcAnimation = LoadModelAnimations("resources/orc/orc2.glb", &animsCount);
+
+  Camera3D camera = {
+    .position = (Vector3){0, 7, 5},
+    .target = (Vector3){0, 0, 0},
+    .up = (Vector3){0, 1, 0},
+    .fovy = 60,
+    .projection = CAMERA_PERSPECTIVE
+  };
+
+  Vector3 warriorPos = {0.0f, 0.0f, 0.0f};
+  Vector3 stompPos = {1, 0, 0};
+  BoundingBox bound = GetMeshBoundingBox(warriorModel.meshes[0]);
+
+  Vector3 pos = {0.0f, 0.0f, 1.0f};
+
+  Vector2 cursor = GetMousePosition();
+
+  warriorModel.transform = MatrixTranslate(0.1f, 0.0f, 0.0f);
 
   while (!WindowShouldClose()) {
+    // UpdateCamera(&camera, CAMERA_FREE);
+
     // controls
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) state = WALK_U, dir = U, vel.y -= SPEED;
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) state = WALK_D, dir = D, vel.y += SPEED;
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) state = WALK_R, dir = R, vel.x += SPEED;
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) state = WALK_L, dir = L, vel.x -= SPEED;
+    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) vel.z -= SPEED;
+    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) vel.z += SPEED;
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) vel.x += SPEED;
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) vel.x -= SPEED;
 
-    // keys
-    if (IsKeyPressed(KEY_I)) updateMobsCount(&mobsCount, &mobs, 10000);
-    if (IsKeyPressed(KEY_O)) updateMobsCount(&mobsCount, &mobs, -10000);
-    if (IsKeyPressed(KEY_P)) paused = !paused;
-    if (IsKeyPressed(KEY_J)) camera.zoom += 0.1f;
-    if (IsKeyPressed(KEY_K)) camera.zoom -= 0.1f;
-    if (IsKeyPressed(KEY_R)) pos.x = 0, pos.y = 0, playerSize = SIZE;
-    if (IsKeyPressed(KEY_Z)) debug = !debug;
-
-    // player
-    Vector2 cursor = GetMousePosition();
-    float dirAngle = atan2(cursor.y - center.y, cursor.x - center.x) * RAD2DEG;
-
-    vel = Vector2Multiply(vel, (Vector2){FRICTION, FRICTION});
-    pos = Vector2Add(pos, Vector2Scale(vel, GetFrameTime()));
-    // angle = dirAngle;
+    // if (IsKeyDown(KEY_SPACE)) {
+    //   frameCounter++;
+    //   UpdateModelAnimation(orcModel, orcAnimation[0], frameCounter);
+    //   if (frameCounter >= orcAnimation[0].frameCount) frameCounter = 0;
+    // }
 
     camera.target = pos;
 
+    vel = Vector3Multiply(vel, (Vector3){FRICTION, FRICTION, FRICTION});
+    pos = Vector3Add(pos, Vector3Scale(vel, GetFrameTime()));
+
+    Vector2 mousePosition = GetMousePosition();
+    Vector3 direction = Vector3Subtract(
+      (Vector3){mousePosition.x, 0, mousePosition.y}, (Vector3){center.x, 0, center.y}
+    );
+    float angle = atan2(direction.x, direction.z) * RAD2DEG - 90;
+
     // draw
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground((Color){76, 115, 25, 255});
 
-    BeginMode2D(camera);
+    BeginMode3D(camera);
 
-    // draw player
-    Rectangle playerRectangle = (Rectangle){pos.x, pos.y, playerSize, playerSize};
-    DrawRectanglePro(playerRectangle, (Vector2){playerSize / 2.0f, playerSize / 2.0f}, angle, RED);
-    Rectangle playerCollisionBox = (Rectangle
-    ){pos.x - playerSize / 2.0f, pos.y - playerSize / 2.0f, playerSize, playerSize};
-    if (debug) DrawRectangleLinesEx(playerCollisionBox, 2, GREEN);
+    // DrawGrid(10, 1.0f);
+    DrawPlane((Vector3){0, -0.1f, 0}, (Vector2){20, 20}, (Color){98, 148, 34, 255});
 
-    // enemy
-    for (int i = 0; i < mobsCount; i++) {
-      Vector2* mob = &mobs[i];
+    DrawModelEx(warriorModel, warriorPos, (Vector3){0, 0.1f, 0}, -90, (Vector3){1, 1, 1}, WHITE);
+    DrawModelEx(orcModel, pos, (Vector3){0, 0.1f, 0}, angle, (Vector3){1, 1, 1}, WHITE);
+    DrawModel(stompModel, stompPos, 0.5f, WHITE);
 
-      if (!paused) {
-        Vector2 direction = Vector2Subtract(pos, *mob);
-        Vector2 normalizedDirection = Vector2Normalize(direction);
-        Vector2 mobVel = {normalizedDirection.x * MOBS_SPEED, normalizedDirection.y * MOBS_SPEED};
-
-        mob->x += mobVel.x;
-        mob->y += mobVel.y;
-      }
-
-      Rectangle enemyCollisionBox = (Rectangle
-      ){mob->x - SIZE / 2.0f, mob->y - SIZE / 2.0f, SIZE, SIZE};
-
-      // collision
-      // if (CheckCollisionRecs(enemyCollisionBox, playerCollisionBox)) {
-      //   mob->x = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
-      //   mob->y = GetRandomValue(-MOBS_RADIUS * 10, MOBS_RADIUS * 10);
-      //   playerSize += 1;
-      // }
-
-      DrawRectangleRec(enemyCollisionBox, GRAY);
-      if (debug) DrawRectangleLinesEx(enemyCollisionBox, 2, GREEN);
-    }
-
-    EndMode2D();
+    EndMode3D();
 
     // UI
     DrawFPS(10, 10);
-
-    char mobsCountText[20];
-    sprintf(mobsCountText, "%d", mobsCount);
-
-    Rectangle bord = {10, 30, 200, 40};
-    DrawRectangleRec(bord, GREEN);
-    DrawText("SPRITES:", 20, 40, 20, WHITE);
-    DrawText(mobsCountText, 120, 40, 20, WHITE);
-
     EndDrawing();
   }
+
+  UnloadTexture(warriorTexture);
+  UnloadModel(warriorModel);
+  UnloadModelAnimations(orcAnimation, animsCount);
 
   CloseWindow();
   return 0;
